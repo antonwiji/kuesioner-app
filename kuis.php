@@ -67,8 +67,8 @@ if (isset($_SESSION['login'])) {
     </div>
     <script>
         let currentQuestion = 1
-        let answerQuestion = []
         let activeQuestion = 0
+        let dataAnswers = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
         document.addEventListener("DOMContentLoaded", (event) => {
             for (let i = 0; i < 10; i++) {
@@ -84,6 +84,18 @@ if (isset($_SESSION['login'])) {
 
         const onClickQuestion = (index) => {
             fetchData(index)
+            activeQuestion = index - 1
+            currentQuestion = activeQuestion
+            const checkValid = dataAnswers[activeQuestion]
+
+            if (checkValid === 0) {
+                document.getElementById(`question${activeQuestion}`).style.backgroundColor = 'red'
+                currentQuestion += 1
+            } else {
+                document.getElementById(`question${activeQuestion}`).style.backgroundColor = 'yellow'
+                currentQuestion += 1
+            }
+
         }
 
         const fetchData = (dataId = currentQuestion) => {
@@ -99,35 +111,41 @@ if (isset($_SESSION['login'])) {
                 }
             }
             let parameters = `query_soal=${dataId}`
-            // document.getElementById(`question${activeQuestion}`).style.backgroundColor = 'red'
             xmlhttp.open("POST", "getdata.php", true)
             xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
             xmlhttp.send(parameters);
         }
 
         const nextQuestion = () => {
-            if (answerQuestion.length >= 9) {
+            if (!dataAnswers.includes(0)) {
                 document.getElementById('btn-complete').style.display = "block"
                 document.getElementById('btn-next').style.display = "none"
             }
-            saveAnswer()
+            newSaveAnswers()
             fetchData()
+
         }
 
-        const saveAnswer = () => {
+        const newSaveAnswers = () => {
             const answer = document.querySelector('input[name="choice"]:checked');
+            if (activeQuestion > 9) {
+                alert('Anda Belum Melengkapi Jawaban')
+                return
+            }
             if (answer != null) {
-                answerQuestion.push(parseInt(answer.getAttribute('data-id')))
+                dataAnswers[activeQuestion] = parseInt(answer?.getAttribute('data-id'))
+                document.getElementById(`question${activeQuestion}`).style.backgroundColor = 'green'
             } else if (answer == null) {
-                alert('wajib diisi')
+                alert('Wajib Di isi')
                 return
             }
             currentQuestion++
             activeQuestion++
         }
+
         const completeQuestion = () => {
             let xmlhttp = new XMLHttpRequest();
-            let parameters = `responden=${answerQuestion}`
+            let parameters = `responden=${dataAnswers}`
             xmlhttp.open("POST", "saveanswers.php", true)
             xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
             xmlhttp.send(parameters);
